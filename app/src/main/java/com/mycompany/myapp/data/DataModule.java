@@ -2,6 +2,7 @@ package com.mycompany.myapp.data;
 
 import android.app.Application;
 
+import com.mycompany.myapp.app.AndroidModule;
 import com.squareup.okhttp.Cache;
 import com.squareup.okhttp.OkHttpClient;
 
@@ -14,7 +15,8 @@ import dagger.Provides;
 import retrofit.client.Client;
 import retrofit.client.OkClient;
 
-@Module
+@Module(library = true,
+        includes = AndroidModule.class)
 public class DataModule {
     private static final int DISK_CACHE_SIZE = 50 * 1024 * 1024; // 50MB
 

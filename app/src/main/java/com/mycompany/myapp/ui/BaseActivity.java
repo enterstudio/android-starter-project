@@ -3,18 +3,17 @@ package com.mycompany.myapp.ui;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 
-import com.mycompany.myapp.app.ApplicationComponent;
-import com.mycompany.myapp.app.HasComponent;
 import com.mycompany.myapp.app.MainApplication;
 import com.mycompany.myapp.monitoring.CrashReporter;
 import com.squareup.otto.Bus;
 
 import javax.inject.Inject;
 
+import dagger.ObjectGraph;
 import hugo.weaving.DebugLog;
 import timber.log.Timber.Tree;
 
-public abstract class BaseActivity<T> extends ActionBarActivity implements HasComponent<T> {
+public abstract class BaseActivity extends ActionBarActivity {
     @Inject
     protected Tree logger;
 
@@ -24,16 +23,19 @@ public abstract class BaseActivity<T> extends ActionBarActivity implements HasCo
     @Inject
     protected Bus bus;
 
-    private T component;
+    private ObjectGraph activityGraph;
 
     @DebugLog
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        component = buildComponent();
+        if (activityGraph == null) {
+            activityGraph = buildActivityGraph();
+        }
+        activityGraph.inject(this);
     }
 
-    protected abstract T buildComponent();
+    protected abstract ObjectGraph buildActivityGraph();
 
     @Override
     protected void onResume() {
@@ -47,12 +49,11 @@ public abstract class BaseActivity<T> extends ActionBarActivity implements HasCo
         super.onPause();
     }
 
-    @Override
-    public T getComponent() {
-        return component;
+    public ObjectGraph getActivityGraph() {
+        return activityGraph;
     }
 
-    protected ApplicationComponent getApplicationComponent() {
-        return ((MainApplication) getApplication()).getComponent();
+    protected ObjectGraph getAppGraph() {
+        return ((MainApplication) getApplication()).getAppGraph();
     }
 }

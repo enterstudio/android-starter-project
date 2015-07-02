@@ -5,7 +5,6 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 
-import com.mycompany.myapp.app.HasComponent;
 import com.mycompany.myapp.monitoring.CrashReporter;
 import com.squareup.otto.Bus;
 
@@ -13,7 +12,7 @@ import javax.inject.Inject;
 
 import timber.log.Timber.Tree;
 
-public abstract class BaseFragment<T> extends Fragment {
+public abstract class BaseFragment extends Fragment {
     @Inject
     protected Tree logger;
 
@@ -31,15 +30,9 @@ public abstract class BaseFragment<T> extends Fragment {
     }
 
     private void attemptInject(Activity activity) {
-        if (activity instanceof HasComponent) {
-            @SuppressWarnings("unchecked")
-            HasComponent<T> hasComponent = (HasComponent<T>) activity;
-            T component = hasComponent.getComponent();
-            inject(component);
-        }
+        BaseActivity baseActivity = (BaseActivity) activity;
+        baseActivity.getActivityGraph().inject(this);
     }
-
-    protected abstract void inject(T component);
 
     @Override
     public void onResume() {

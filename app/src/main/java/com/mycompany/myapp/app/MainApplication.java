@@ -9,25 +9,25 @@ import com.google.android.gms.security.ProviderInstaller.ProviderInstallListener
 
 import javax.inject.Inject;
 
+import dagger.ObjectGraph;
 import timber.log.Timber.Tree;
 
-public class MainApplication extends Application implements HasComponent<ApplicationComponent> {
+public class MainApplication extends Application {
     @Inject
     Tree logger;
 
-    private ApplicationComponent component;
+    private ObjectGraph appGraph;
 
     @Override
     public void onCreate() {
         super.onCreate();
         initApplication();
         upgradeSecurityProvider();
-        initApplicationComponent();
+        initAppGraph();
     }
 
     private void initApplication() {
         new BuildConfigApplicationInitialization(this).immediateInitialization();
-        new BuildFlavorApplicationInitialization(this).immediateInitialization();
     }
 
     private void upgradeSecurityProvider() {
@@ -44,15 +44,15 @@ public class MainApplication extends Application implements HasComponent<Applica
         });
     }
 
-    private void initApplicationComponent() {
-        component = DaggerApplicationComponent.builder()
-                .androidModule(new AndroidModule(this))
-                .build();
-        component.inject(this);
+    private void initAppGraph() {
+        appGraph = ObjectGraph.create(
+                new AndroidModule(this),
+                new ApplicationModule());
+
+        appGraph.inject(this);
     }
 
-    @Override
-    public ApplicationComponent getComponent() {
-        return component;
+    public ObjectGraph getAppGraph() {
+        return appGraph;
     }
 }

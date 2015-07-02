@@ -22,7 +22,13 @@ import org.mockito.stubbing.Answer;
 import java.util.ArrayList;
 import java.util.List;
 
-import static android.support.test.espresso.Espresso.*;
+import javax.inject.Inject;
+
+import dagger.Module;
+import dagger.ObjectGraph;
+
+import static android.support.test.espresso.Espresso.closeSoftKeyboard;
+import static android.support.test.espresso.Espresso.onView;
 import static android.support.test.espresso.action.ViewActions.click;
 import static android.support.test.espresso.assertion.ViewAssertions.matches;
 import static android.support.test.espresso.matcher.ViewMatchers.withId;
@@ -36,6 +42,22 @@ import static org.mockito.Mockito.when;
 @LargeTest
 public class MainActivityEspressoTest {
 
+    public static class TestInjections {
+        @Inject
+        Bus bus;
+
+        @Inject
+        GitHubBusService gitHubBusService;
+    }
+
+    @Module(addsTo = MainModule.class,
+            injects = {
+                    TestInjections.class
+            })
+    public static class TestModule {
+
+    }
+
     @Rule
     public ActivityTestRule<MainActivity> activityRule = new ActivityTestRule<>(MainActivity.class, true);
 
@@ -46,11 +68,11 @@ public class MainActivityEspressoTest {
 
     @Test
     public void testFetchAndDisplayCommits() {
-        MainActivity activity = activityRule.getActivity();
-        final Bus bus = activity.getComponent().bus();
-        final GitHubBusService gitHubBusService = activity.getComponent().gitHubBusService();
-
-        final LoadCommitsRequest request = new LoadCommitsRequest("madebyatomicrobot", "android-starter-project");
+        // FIXME: This isn't the correct way to do things because we won't really end up correctly
+        // mocking out the correct dependencies.
+        ObjectGraph testGraph = activityRule.getActivity().getActivityGraph().plus(TestModule.class);
+        final TestInjections testInjections = new TestInjections();
+        testGraph.inject(testInjections);
 
         doAnswer(new Answer() {
             @Override
@@ -62,14 +84,15 @@ public class MainActivityEspressoTest {
                 List<Commit> commits = new ArrayList<>();
                 commits.add(commit);
 
+                LoadCommitsRequest request = new LoadCommitsRequest("madebyatomicrobot", "android-starter-project");
                 LoadCommitsResponse response = new LoadCommitsResponse(request, commits);
-                bus.post(response);
+                testInjections.bus.post(response);
 
                 return null;
             }
-        }).when(gitHubBusService).loadCommits(any(LoadCommitsRequest.class));
+        }).when(testInjections.gitHubBusService).loadCommits(any(LoadCommitsRequest.class));
 
-        Spoon.screenshot(activity, "before_fetching_commits");
+        Spoon.screenshot(activityRule.getActivity(), "before_fetching_commits");
 
         onView(withId(R.id.fetch_commits)).perform(click());
         closeSoftKeyboard();
@@ -77,7 +100,7 @@ public class MainActivityEspressoTest {
         // TODO - This is a hack...
         InstrumentationRegistry.getInstrumentation().waitForIdleSync();
 
-        Spoon.screenshot(activity, "after_fetching_commits");
+        Spoon.screenshot(activityRule.getActivity(), "after_fetching_commits");
 
         onView(withId(R.id.author)).check(matches(withText("Author: Test author")));
         onView(withId(R.id.message)).check(matches(withText("Test commit message")));

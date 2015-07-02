@@ -34,7 +34,7 @@ import hugo.weaving.DebugLog;
 import icepick.Icepick;
 import icepick.Icicle;
 
-public class MainFragment extends BaseFragment<MainComponent> {
+public class MainFragment extends BaseFragment {
 
     public interface MainFragmentListener {
 
@@ -68,11 +68,6 @@ public class MainFragment extends BaseFragment<MainComponent> {
     String repository = "android-starter-project";
 
     private CommitsAdapter adapter;
-
-    @Override
-    protected void inject(MainComponent component) {
-        component.inject(this);
-    }
 
     @DebugLog
     @Override

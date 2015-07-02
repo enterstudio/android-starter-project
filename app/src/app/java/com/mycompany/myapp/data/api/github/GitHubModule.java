@@ -17,7 +17,7 @@ import retrofit.converter.Converter;
 import retrofit.converter.JacksonConverter;
 import timber.log.Timber.Tree;
 
-@Module
+@Module(library = true, complete = false)
 public class GitHubModule {
     @Singleton
     @Api("github")

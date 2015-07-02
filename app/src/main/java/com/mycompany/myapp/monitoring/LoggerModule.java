@@ -8,7 +8,7 @@ import timber.log.Timber;
 import timber.log.Timber.DebugTree;
 import timber.log.Timber.Tree;
 
-@Module
+@Module(library = true)
 public class LoggerModule {
     @Singleton
     @Provides

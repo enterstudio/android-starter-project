@@ -7,7 +7,7 @@ import javax.inject.Singleton;
 import dagger.Module;
 import dagger.Provides;
 
-@Module
+@Module(library = true, complete = false)
 public class AndroidModule {
     private final MainApplication application;
 

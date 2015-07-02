@@ -7,7 +7,7 @@ import dagger.Provides;
 
 import static org.mockito.Mockito.mock;
 
-@Module
+@Module(library = true)
 public class GitHubModule {
     @Singleton
     @Provides
