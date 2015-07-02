@@ -3,6 +3,7 @@ package com.mycompany.myapp.ui.main;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.annotation.StringRes;
+import android.support.design.widget.Snackbar;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -13,12 +14,9 @@ import android.widget.TextView;
 
 import com.mycompany.myapp.BuildConfig;
 import com.mycompany.myapp.R;
-import com.mycompany.myapp.data.api.github.GitHubBusService;
-import com.mycompany.myapp.data.api.github.GitHubBusService.LoadCommitsRequest;
-import com.mycompany.myapp.data.api.github.GitHubBusService.LoadCommitsResponse;
+import com.mycompany.myapp.data.api.github.GitHubService;
 import com.mycompany.myapp.data.api.github.model.Commit;
 import com.mycompany.myapp.ui.BaseFragment;
-import com.squareup.otto.Subscribe;
 
 import org.parceler.Parcels;
 
@@ -33,6 +31,10 @@ import butterknife.OnClick;
 import hugo.weaving.DebugLog;
 import icepick.Icepick;
 import icepick.Icicle;
+import rx.Subscriber;
+import rx.Subscription;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.schedulers.Schedulers;
 
 public class MainFragment extends BaseFragment<MainComponent> {
 
@@ -44,7 +46,10 @@ public class MainFragment extends BaseFragment<MainComponent> {
     MainFragmentListener listener;
 
     @Inject
-    GitHubBusService gitHubBusService;
+    GitHubService gitHubService;
+
+    @Bind(R.id.header)
+    View header;
 
     @Bind(R.id.username)
     EditText userNameView;
@@ -125,18 +130,46 @@ public class MainFragment extends BaseFragment<MainComponent> {
         fingerprintView.setText(String.format("Fingerprint: %s", BuildConfig.VERSION_FINGERPRINT));
     }
 
+    @Override
+    public void onDestroy() {
+        if (commitsSubscription != null) {
+            commitsSubscription.unsubscribe();
+        }
+        super.onDestroy();
+    }
+
+    private Subscription commitsSubscription;
+
     @OnClick(R.id.fetch_commits)
     public void handleFetchCommits() {
         username = userNameView.getText().toString();
         repository = repositoryView.getText().toString();
 
-        gitHubBusService.loadCommits(new LoadCommitsRequest(username, repository));
-    }
+        if (commitsSubscription != null) {
+            commitsSubscription.unsubscribe();
+        }
 
-    @Subscribe
-    public void handleLoadCommitsResponse(LoadCommitsResponse response) {
-        adapter.commits = response.getCommits();
-        adapter.notifyDataSetChanged();
+        commitsSubscription = gitHubService.listCommits(username, repository)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Subscriber<List<Commit>>() {
+                    @Override
+                    public void onCompleted() {
+                        commitsSubscription.unsubscribe();
+                        commitsSubscription = null;
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        Snackbar.make(getView(), e.getMessage(), Snackbar.LENGTH_LONG).show();
+                    }
+
+                    @Override
+                    public void onNext(List<Commit> commits) {
+                        adapter.commits = commits;
+                        adapter.notifyDataSetChanged();
+                    }
+                });
     }
 
     public class CommitsAdapter extends RecyclerView.Adapter<ViewHolder> {

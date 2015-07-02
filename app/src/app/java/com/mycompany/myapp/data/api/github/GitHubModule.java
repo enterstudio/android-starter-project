@@ -3,7 +3,6 @@ package com.mycompany.myapp.data.api.github;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mycompany.myapp.data.api.Api;
-import com.squareup.otto.Bus;
 
 import javax.inject.Singleton;
 
@@ -15,7 +14,6 @@ import retrofit.RestAdapter;
 import retrofit.client.Client;
 import retrofit.converter.Converter;
 import retrofit.converter.JacksonConverter;
-import timber.log.Timber.Tree;
 
 @Module
 public class GitHubModule {
@@ -48,13 +46,7 @@ public class GitHubModule {
 
     @Singleton
     @Provides
-    GitHubApiService provideGitHubService(@Api("github") RestAdapter restAdapter) {
-        return restAdapter.create(GitHubApiService.class);
-    }
-
-    @Singleton
-    @Provides
-    GitHubBusService provideGitHubBusService(GitHubApiService api, Bus bus, Tree logger) {
-        return new GitHubBusService(api, bus, logger);
+    GitHubService provideGitHubService(@Api("github") RestAdapter restAdapter) {
+        return restAdapter.create(GitHubService.class);
     }
 }

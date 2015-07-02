@@ -6,29 +6,26 @@ import android.support.test.runner.AndroidJUnit4;
 import android.test.suitebuilder.annotation.LargeTest;
 
 import com.mycompany.myapp.R;
-import com.mycompany.myapp.data.api.github.GitHubBusService;
-import com.mycompany.myapp.data.api.github.GitHubBusService.LoadCommitsRequest;
-import com.mycompany.myapp.data.api.github.GitHubBusService.LoadCommitsResponse;
+import com.mycompany.myapp.data.api.github.GitHubService;
 import com.mycompany.myapp.data.api.github.model.Commit;
-import com.squareup.otto.Bus;
 import com.squareup.spoon.Spoon;
 
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static android.support.test.espresso.Espresso.*;
+import rx.Observable;
+
+import static android.support.test.espresso.Espresso.closeSoftKeyboard;
+import static android.support.test.espresso.Espresso.onView;
 import static android.support.test.espresso.action.ViewActions.click;
 import static android.support.test.espresso.assertion.ViewAssertions.matches;
 import static android.support.test.espresso.matcher.ViewMatchers.withId;
 import static android.support.test.espresso.matcher.ViewMatchers.withText;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -47,27 +44,17 @@ public class MainActivityEspressoTest {
     @Test
     public void testFetchAndDisplayCommits() {
         MainActivity activity = activityRule.getActivity();
-        final Bus bus = activity.getComponent().bus();
-        final GitHubBusService gitHubBusService = activity.getComponent().gitHubBusService();
+        final GitHubService gitHubService = activity.getComponent().gitHubService();
 
-        final LoadCommitsRequest request = new LoadCommitsRequest("madebyatomicrobot", "android-starter-project");
+        Commit commit = mock(Commit.class);
+        when(commit.getAuthor()).thenReturn("Test author");
+        when(commit.getCommitMessage()).thenReturn("Test commit message");
 
-        doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                Commit commit = mock(Commit.class);
-                when(commit.getAuthor()).thenReturn("Test author");
-                when(commit.getCommitMessage()).thenReturn("Test commit message");
+        List<Commit> commits = new ArrayList<>();
+        commits.add(commit);
 
-                List<Commit> commits = new ArrayList<>();
-                commits.add(commit);
-
-                LoadCommitsResponse response = new LoadCommitsResponse(request, commits);
-                bus.post(response);
-
-                return null;
-            }
-        }).when(gitHubBusService).loadCommits(any(LoadCommitsRequest.class));
+        when(gitHubService.listCommits(any(String.class), any(String.class)))
+                .thenReturn(Observable.just(commits));
 
         Spoon.screenshot(activity, "before_fetching_commits");
 
