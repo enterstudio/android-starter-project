@@ -110,14 +110,18 @@ task staticAnalysis {
 
 task testing() {
     def appProject = subprojects.find { project -> 'app' == project.name }
+    def espressoProject = subprojects.find { project -> 'espressoTests' == project.name }
 
     def unitTestTasks = getProjectTask(appProject, 'testDevDebugUnitTest')
-    def integrationTestTasks = getProjectTask(appProject, 'spoonDevDebugAndroidTest')
+    def integrationTestTasks = getProjectTask(appProject, 'connectedDevDebugAndroidTest')
+    def espressoTestTasks = getProjectTask(espressoProject, 'connectedDebugAndroidTest')
 
     dependsOn unitTestTasks
     dependsOn integrationTestTasks
+    dependsOn espressoTestTasks
 
     integrationTestTasks.each { task -> task.mustRunAfter unitTestTasks }
+    espressoTestTasks.each { task -> task.mustRunAfter integrationTestTasks }
 }
 
 task release() {

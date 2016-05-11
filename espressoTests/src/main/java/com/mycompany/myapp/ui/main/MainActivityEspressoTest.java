@@ -1,5 +1,6 @@
 package com.mycompany.myapp.ui.main;
 
+import android.support.test.espresso.Espresso;
 import android.test.suitebuilder.annotation.MediumTest;
 
 import com.mycompany.myapp.EspressoTestRule;
@@ -9,7 +10,6 @@ import com.mycompany.myapp.data.api.github.GitHubService;
 import com.mycompany.myapp.data.api.github.GitHubService.LoadCommitsRequest;
 import com.mycompany.myapp.data.api.github.GitHubService.LoadCommitsResponse;
 import com.mycompany.myapp.data.api.github.model.Commit;
-import com.squareup.spoon.Spoon;
 
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
@@ -25,11 +25,13 @@ import rx.Observable;
 
 import static android.support.test.espresso.Espresso.*;
 import static android.support.test.espresso.action.ViewActions.*;
-import static android.support.test.espresso.action.ViewActions.closeSoftKeyboard;
 import static android.support.test.espresso.assertion.ViewAssertions.matches;
 import static android.support.test.espresso.matcher.ViewMatchers.*;
 import static com.mycompany.myapp.RecyclerViewMatcher.withRecyclerView;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
+
+//import com.squareup.spoon.Spoon;
 
 @MediumTest
 public class MainActivityEspressoTest {
@@ -42,7 +44,7 @@ public class MainActivityEspressoTest {
 
     @Test
     public void testBuildFingerprint() {
-        when(gitHubService.loadCommits(any())).thenReturn(Observable.<LoadCommitsResponse>empty());
+        when(gitHubService.loadCommits(any(LoadCommitsRequest.class))).thenReturn(Observable.<LoadCommitsResponse>empty());
 
         activityRule.launchActivity(null);
         onView(withId(R.id.fingerprint)).check(matches(withText(new BaseMatcher<String>() {
@@ -62,15 +64,15 @@ public class MainActivityEspressoTest {
     @Test
     public void testFetchAndDisplayCommits() {
         Observable<LoadCommitsResponse> response = buildMockLoadCommitsResponse();
-        when(gitHubService.loadCommits(any())).thenReturn(response);
+        when(gitHubService.loadCommits(any(LoadCommitsRequest.class))).thenReturn(response);
 
         MainActivity activity = activityRule.launchActivity(null);
-        Spoon.screenshot(activity, "before_fetching_commits");
+        //Spoon.screenshot(activity, "before_fetching_commits");
 
         onView(withId(R.id.fetch_commits)).perform(click());
-        closeSoftKeyboard();
+        Espresso.closeSoftKeyboard();
 
-        Spoon.screenshot(activity, "after_fetching_commits");
+        //Spoon.screenshot(activity, "after_fetching_commits");
 
         onView(withRecyclerView(R.id.commits)
                 .atPositionOnView(0, R.id.author))

@@ -22,6 +22,11 @@ public class MainApplicationDaggerMockRule extends DaggerMockRule<ApplicationCom
                 new CrashReporterModule(),
                 new DataModule(),
                 new GitHubModule());
-        set(component -> getAppUnderTest().setComponent(component));
+        set(new ComponentSetter<ApplicationComponent>() {
+            @Override
+            public void setComponent(ApplicationComponent component) {
+                getAppUnderTest().setComponent(component);
+            }
+        });
     }
 }
